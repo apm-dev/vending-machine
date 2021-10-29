@@ -9,4 +9,5 @@ var (
 	ErrInvalidToken      = errors.New("unauthorized user")
 	ErrUnauthorized      = errors.New("unauthorized user")
 	ErrWrongCredentials  = errors.New("wrong credentials")
+	ErrInvalidCoin       = errors.New("invalid coin, use 5, 10, 20, 50, 100 cent coins")
 )

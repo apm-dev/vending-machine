@@ -25,10 +25,12 @@ func InitService(
 	ur domain.UserRepository,
 	jr domain.JwtRepository,
 	jwt *JWTManager,
+	depositTimeout time.Duration,
 ) domain.UserService {
 	if UserService == nil {
 		UserService = &Service{
 			ur: ur, jr: jr, jwt: jwt,
+			depositTimeout: depositTimeout,
 		}
 	}
 	return UserService
@@ -158,7 +160,46 @@ func (s *Service) TerminateActiveSessions(ctx context.Context, token string) err
 
 // Deposit increases buyer(user) deposit
 func (s *Service) Deposit(ctx context.Context, coin domain.Coin) (uint, error) {
-	panic("not implemented") // TODO: Implement
+	const op string = "user.service.Deposit"
+	
+	ctx, cancel := context.WithTimeout(ctx, s.depositTimeout)
+	defer cancel()
+
+	if !coin.IsValid() {
+		return 0, domain.ErrInvalidCoin
+	}
+
+	uid, err := domain.UserIdOfContext(ctx)
+	if err != nil {
+		return 0, domain.ErrInternalServer
+	}
+
+	user, err := s.ur.FindById(ctx, uid)
+	if err != nil {
+		logger.Log(logger.ERROR, errors.Wrap(err, op).Error())
+		return 0, domain.ErrInternalServer
+	}
+
+	if user.Role != domain.BUYER {
+		return 0, domain.ErrUnauthorized
+	}
+
+	// use locks because of concurrent requests
+	// we make sure to add user deposits without conflict
+	// there are better ways to handle this kind of issue
+	// but it's just for POC
+	s.depositLock.Lock()
+	defer s.depositLock.Unlock()
+
+	user.AddDeposit(coin)
+
+	err = s.ur.Update(ctx, user)
+	if err != nil {
+		logger.Log(logger.ERROR, errors.Wrap(err, op).Error())
+		return 0, domain.ErrInternalServer
+	}
+
+	return user.Deposit, nil
 }
 
 // ResetDeposit reset buyer(user) deposits back to zero

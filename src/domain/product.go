@@ -2,16 +2,6 @@ package domain
 
 import "context"
 
-const (
-	Five    Coin = 5
-	Ten     Coin = 10
-	Twenty  Coin = 20
-	Fifty   Coin = 50
-	Hundred Coin = 100
-)
-
-type Coin int
-
 type Product struct {
 	Id              uint   `json:"id"`
 	Name            string `json:"name"`

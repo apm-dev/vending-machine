@@ -43,9 +43,13 @@ func NewUser(uname, passwd string, role Role) (*User, error) {
 	}, nil
 }
 
-func (user *User) CheckPassword(password string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+func (u *User) CheckPassword(password string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
 	return err == nil
+}
+
+func (u *User) AddDeposit(coin Coin) {
+	u.Deposit += uint(coin)
 }
 
 func UserIdOfContext(ctx context.Context) (uint, error) {
