@@ -5,21 +5,21 @@ import (
 	"time"
 )
 
-type (
-	Role string
-)
-
 const (
 	Seller Role = "seller"
 	Buyer  Role = "buyer"
 )
 
+type (
+	Role string
+)
+
 type User struct {
-	Id       int64
-	Username string
-	Password string
-	Role     Role
-	Deposit  int64
+	Id       uint   `json:"id"`
+	Username string `json:"username"`
+	Password string `json:"-"`
+	Role     Role   `json:"role"`
+	Deposit  uint   `json:"deposit"`
 }
 
 func NewUser(uname, passwd string, role Role) *User {
@@ -32,26 +32,30 @@ func NewUser(uname, passwd string, role Role) *User {
 }
 
 type UserService interface {
-	// Register create new user and return id, jwt token or error
-	Register(ctx context.Context, uname, pass string, role Role) (int64, string, error)
-	// Login check credentials, generate and return jwt token and a boolean
+	// Register creates new user and return jwt token or error
+	Register(ctx context.Context, uname, pass string, role Role) (string, error)
+	// Login checks credentials, generate and return jwt token and a boolean
 	// which says is there another active session using this account or not
 	Login(ctx context.Context, uname, pass string) (string, bool, error)
-	// Authorize parse jwt token and return related user
-	Authorize(ctx context.Context, token string) (*User, error)
-	// TerminateActiveSessions terminate all other active sessions
-	TerminateActiveSessions(token string) error
+	// Authorize parses jwt token and return related user
+	Authorize(ctx context.Context, token string) (uint, error)
+	// TerminateActiveSessions terminates all other active sessions
+	TerminateActiveSessions(ctx context.Context, token string) error
+	// Deposit increases buyer(user) deposit
+	Deposit(ctx context.Context, coin Coin) (uint, error)
+	// ResetDeposit reset buyer(user) deposits back to zero
+	ResetDeposit(ctx context.Context) error
 }
 
 type UserRepository interface {
-	FindById(ctx context.Context, id int64) *User
-	Insert(ctx context.Context, u User) int64
+	Insert(ctx context.Context, u User) uint
+	FindById(ctx context.Context, id uint) *User
 	Update(ctx context.Context, u *User)
-	Delete(ctx context.Context, id int64)
+	Delete(ctx context.Context, id uint)
 }
 
 type JwtRepository interface {
 	Exists(ctx context.Context, token string) (bool, error)
-	Insert(ctx context.Context, userId int64, token string, ttl time.Duration) error
-	DeleteTokensOfUserExcept(ctx context.Context, userId int64, exceptionToken string) error
+	Insert(ctx context.Context, userId uint, token string, ttl time.Duration) error
+	DeleteTokensOfUserExcept(ctx context.Context, userId uint, exceptionToken string) error
 }
