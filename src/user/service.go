@@ -59,7 +59,7 @@ func (s *Service) Register(ctx context.Context, uname, pass string, role domain.
 // Login checks credentials, generate and return jwt token and a boolean
 // which says is there another active session using this account or not
 func (s *Service) Login(ctx context.Context, uname, pass string) (string, bool, error) {
-	const op string = "domain.authing.service.Login"
+	const op string = "user.service.Login"
 	// fetch user from db
 	user, err := s.ur.FindByUsername(ctx, uname)
 	if err != nil {
@@ -103,7 +103,29 @@ func (s *Service) Login(ctx context.Context, uname, pass string) (string, bool, 
 
 // Authorize parses jwt token and return related user
 func (s *Service) Authorize(ctx context.Context, token string) (uint, error) {
-	panic("not implemented") // TODO: Implement
+	const op string = "domain.authing.service.Authorize"
+
+	// verify and get claims of token
+	claims, err := s.jwt.Verify(token)
+	if err != nil {
+		if errors.Is(err, domain.ErrInvalidToken) {
+			logger.Log(logger.INFO, errors.Wrap(err, op).Error())
+			return 0, domain.ErrInvalidToken
+		}
+		logger.Log(logger.ERROR, errors.Wrap(err, op).Error())
+		return 0, domain.ErrInternalServer
+	}
+
+	// check token existans in db to see is it still active or not
+	exists, err := s.jr.Exists(ctx, token)
+	if err != nil {
+		return 0, domain.ErrInternalServer
+	}
+	if !exists {
+		return 0, domain.ErrInvalidToken
+	}
+
+	return claims.Id, nil
 }
 
 // TerminateActiveSessions terminates all other active sessions
