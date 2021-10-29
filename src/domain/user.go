@@ -48,10 +48,10 @@ type UserService interface {
 }
 
 type UserRepository interface {
-	Insert(ctx context.Context, u User) uint
-	FindById(ctx context.Context, id uint) *User
-	Update(ctx context.Context, u *User)
-	Delete(ctx context.Context, id uint)
+	Insert(ctx context.Context, u User) (uint, error)
+	FindById(ctx context.Context, id uint) (*User, error)
+	Update(ctx context.Context, u *User) error
+	Delete(ctx context.Context, id uint) error
 }
 
 type JwtRepository interface {
