@@ -52,6 +52,10 @@ func (u *User) AddDeposit(coin Coin) {
 	u.Deposit += uint(coin)
 }
 
+func (u *User) ResetDeposit() {
+	u.Deposit = 0
+}
+
 func UserIdOfContext(ctx context.Context) (uint, error) {
 	uid, ok := ctx.Value(USER_ID_CONTEXT_KEY).(uint)
 	if !ok || uid == 0 {

@@ -161,7 +161,7 @@ func (s *Service) TerminateActiveSessions(ctx context.Context, token string) err
 // Deposit increases buyer(user) deposit
 func (s *Service) Deposit(ctx context.Context, coin domain.Coin) (uint, error) {
 	const op string = "user.service.Deposit"
-	
+
 	ctx, cancel := context.WithTimeout(ctx, s.depositTimeout)
 	defer cancel()
 
@@ -204,5 +204,36 @@ func (s *Service) Deposit(ctx context.Context, coin domain.Coin) (uint, error) {
 
 // ResetDeposit reset buyer(user) deposits back to zero
 func (s *Service) ResetDeposit(ctx context.Context) error {
-	panic("not implemented") // TODO: Implement
+	const op string = "user.service.ResetDeposit"
+
+	ctx, cancel := context.WithTimeout(ctx, s.depositTimeout)
+	defer cancel()
+
+	uid, err := domain.UserIdOfContext(ctx)
+	if err != nil {
+		return domain.ErrInternalServer
+	}
+
+	user, err := s.ur.FindById(ctx, uid)
+	if err != nil {
+		logger.Log(logger.ERROR, errors.Wrap(err, op).Error())
+		return domain.ErrInternalServer
+	}
+
+	if user.Role != domain.BUYER {
+		return domain.ErrUnauthorized
+	}
+
+	s.depositLock.Lock()
+	defer s.depositLock.Unlock()
+
+	user.ResetDeposit()
+
+	err = s.ur.Update(ctx, user)
+	if err != nil {
+		logger.Log(logger.ERROR, errors.Wrap(err, op).Error())
+		return domain.ErrInternalServer
+	}
+
+	return nil
 }
