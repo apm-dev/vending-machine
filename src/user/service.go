@@ -2,25 +2,58 @@ package user
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/apm-dev/vending-machine/domain"
+	"github.com/apm-dev/vending-machine/pkg/logger"
+	"github.com/pkg/errors"
 )
 
 type Service struct {
-	ur domain.UserRepository
-	jr domain.JwtRepository
+	ur  domain.UserRepository
+	jr  domain.JwtRepository
+	jwt *JWTManager
 }
 
-func InitService(ur domain.UserRepository, jr domain.JwtRepository) domain.UserService {
+func InitService(
+	ur domain.UserRepository,
+	jr domain.JwtRepository,
+	jwt *JWTManager,
+) domain.UserService {
 	return &Service{
-		ur: ur,
-		jr: jr,
+		ur: ur, jr: jr, jwt: jwt,
 	}
 }
 
 // Register creates new user and return jwt token or error
 func (s *Service) Register(ctx context.Context, uname string, pass string, role domain.Role) (string, error) {
-	panic("not implemented") // TODO: Implement
+	const op string = "user.service.Register"
+	// create domain user object
+	user, err := domain.NewUser(uname, pass, role)
+	if err != nil {
+		logger.Log(logger.ERROR, errors.Wrap(err, op).Error())
+		return "", domain.ErrInternalServer
+	}
+	// persist user
+	_, err = s.ur.Insert(ctx, *user)
+	if err != nil {
+		if errors.Is(err, domain.ErrUserAlreadyExists) {
+			return "", domain.ErrUserAlreadyExists
+		}
+		logger.Log(logger.ERROR, errors.Wrap(err, op).Error())
+		return "", domain.ErrInternalServer
+	}
+
+	// generate jwt token with user claims
+	token, err := s.jwt.Generate(user)
+	if err != nil {
+		logger.Log(logger.ERROR, errors.Wrap(err, op).Error())
+		return "", domain.ErrInternalServer
+	}
+
+	logger.Log(logger.INFO, fmt.Sprintf("%s registered", uname))
+
+	return token, nil
 }
 
 // Login checks credentials, generate and return jwt token and a boolean
