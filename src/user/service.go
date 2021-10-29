@@ -103,7 +103,7 @@ func (s *Service) Login(ctx context.Context, uname, pass string) (string, bool, 
 
 // Authorize parses jwt token and return related user
 func (s *Service) Authorize(ctx context.Context, token string) (uint, error) {
-	const op string = "domain.authing.service.Authorize"
+	const op string = "user.service.Authorize"
 
 	// verify and get claims of token
 	claims, err := s.jwt.Verify(token)
@@ -130,7 +130,21 @@ func (s *Service) Authorize(ctx context.Context, token string) (uint, error) {
 
 // TerminateActiveSessions terminates all other active sessions
 func (s *Service) TerminateActiveSessions(ctx context.Context, token string) error {
-	panic("not implemented") // TODO: Implement
+	const op string = "user.service.TerminateActiveSessions"
+
+	uid, err := domain.UserIdOfContext(ctx)
+	if err != nil {
+		logger.Log(logger.WARN, errors.Wrap(err, op).Error())
+		return domain.ErrInternalServer
+	}
+
+	err = s.jr.DeleteTokensOfUserExcept(ctx, uid, token)
+	if err != nil {
+		logger.Log(logger.ERROR, errors.Wrap(err, op).Error())
+		return domain.ErrInternalServer
+	}
+
+	return nil
 }
 
 // Deposit increases buyer(user) deposit

@@ -9,8 +9,10 @@ import (
 )
 
 const (
-	Seller Role = "seller"
-	Buyer  Role = "buyer"
+	USER_ID_CONTEXT_KEY = "userId"
+
+	SELLER Role = "seller"
+	BUYER  Role = "buyer"
 )
 
 type (
@@ -44,6 +46,14 @@ func NewUser(uname, passwd string, role Role) (*User, error) {
 func (user *User) CheckPassword(password string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	return err == nil
+}
+
+func UserIdOfContext(ctx context.Context) (uint, error) {
+	uid, ok := ctx.Value(USER_ID_CONTEXT_KEY).(uint)
+	if !ok || uid == 0 {
+		return 0, ErrUserNotFound
+	}
+	return uid, nil
 }
 
 type UserService interface {
