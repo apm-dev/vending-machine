@@ -3,6 +3,8 @@ package user
 import (
 	"context"
 	"fmt"
+	"sync"
+	"time"
 
 	"github.com/apm-dev/vending-machine/domain"
 	"github.com/apm-dev/vending-machine/pkg/logger"
@@ -10,19 +12,26 @@ import (
 )
 
 type Service struct {
-	ur  domain.UserRepository
-	jr  domain.JwtRepository
-	jwt *JWTManager
+	ur             domain.UserRepository
+	jr             domain.JwtRepository
+	jwt            *JWTManager
+	depositTimeout time.Duration
+	depositLock    *sync.RWMutex
 }
+
+var UserService *Service
 
 func InitService(
 	ur domain.UserRepository,
 	jr domain.JwtRepository,
 	jwt *JWTManager,
 ) domain.UserService {
-	return &Service{
-		ur: ur, jr: jr, jwt: jwt,
+	if UserService == nil {
+		UserService = &Service{
+			ur: ur, jr: jr, jwt: jwt,
+		}
 	}
+	return UserService
 }
 
 // Register creates new user and return jwt token or error
