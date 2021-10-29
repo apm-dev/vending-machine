@@ -3,6 +3,9 @@ package domain
 import (
 	"context"
 	"time"
+
+	"github.com/pkg/errors"
+	"golang.org/x/crypto/bcrypt"
 )
 
 const (
@@ -22,13 +25,20 @@ type User struct {
 	Deposit  uint   `json:"deposit"`
 }
 
-func NewUser(uname, passwd string, role Role) *User {
+func NewUser(uname, passwd string, role Role) (*User, error) {
+	const op string = "domain.user.NewUser"
+	// storing hash of password for security reasons
+	hash, err := bcrypt.GenerateFromPassword([]byte(passwd), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, errors.Wrap(err, op)
+	}
+
 	return &User{
 		Username: uname,
-		Password: passwd,
+		Password: string(hash),
 		Role:     role,
 		Deposit:  0,
-	}
+	}, nil
 }
 
 type UserService interface {
