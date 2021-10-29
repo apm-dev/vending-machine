@@ -41,6 +41,11 @@ func NewUser(uname, passwd string, role Role) (*User, error) {
 	}, nil
 }
 
+func (user *User) CheckPassword(password string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	return err == nil
+}
+
 type UserService interface {
 	// Register creates new user and return jwt token or error
 	Register(ctx context.Context, uname, pass string, role Role) (string, error)
@@ -60,12 +65,14 @@ type UserService interface {
 type UserRepository interface {
 	Insert(ctx context.Context, u User) (uint, error)
 	FindById(ctx context.Context, id uint) (*User, error)
+	FindByUsername(ctx context.Context, un string) (*User, error)
 	Update(ctx context.Context, u *User) error
 	Delete(ctx context.Context, id uint) error
 }
 
 type JwtRepository interface {
-	Exists(ctx context.Context, token string) (bool, error)
 	Insert(ctx context.Context, userId uint, token string, ttl time.Duration) error
+	Exists(ctx context.Context, token string) (bool, error)
+	UserTokensCount(ctx context.Context, uid uint) (uint, error)
 	DeleteTokensOfUserExcept(ctx context.Context, userId uint, exceptionToken string) error
 }

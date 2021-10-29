@@ -26,7 +26,7 @@ func InitService(
 }
 
 // Register creates new user and return jwt token or error
-func (s *Service) Register(ctx context.Context, uname string, pass string, role domain.Role) (string, error) {
+func (s *Service) Register(ctx context.Context, uname, pass string, role domain.Role) (string, error) {
 	const op string = "user.service.Register"
 	// create domain user object
 	user, err := domain.NewUser(uname, pass, role)
@@ -58,8 +58,47 @@ func (s *Service) Register(ctx context.Context, uname string, pass string, role 
 
 // Login checks credentials, generate and return jwt token and a boolean
 // which says is there another active session using this account or not
-func (s *Service) Login(ctx context.Context, uname string, pass string) (string, bool, error) {
-	panic("not implemented") // TODO: Implement
+func (s *Service) Login(ctx context.Context, uname, pass string) (string, bool, error) {
+	const op string = "domain.authing.service.Login"
+	// fetch user from db
+	user, err := s.ur.FindByUsername(ctx, uname)
+	if err != nil {
+		if errors.Is(err, domain.ErrUserNotFound) {
+			return "", false, domain.ErrUserNotFound
+		}
+		logger.Log(logger.ERROR, errors.Wrap(err, op).Error())
+		return "", false, domain.ErrInternalServer
+	}
+	// check password
+	if !user.CheckPassword(pass) {
+		logger.Log(logger.INFO, errors.Wrap(domain.ErrWrongCredentials, user.Username).Error())
+		return "", false, domain.ErrWrongCredentials
+	}
+	// generate jwt token with user claims
+	token, err := s.jwt.Generate(user)
+	if err != nil {
+		logger.Log(logger.ERROR, errors.Wrap(err, op).Error())
+		return "", false, domain.ErrInternalServer
+	}
+
+	// persist jwt token
+	err = s.jr.Insert(ctx, user.Id, token, s.jwt.tokenDuration)
+	if err != nil {
+		logger.Log(logger.ERROR, errors.Wrap(err, op).Error())
+		return "", false, domain.ErrInternalServer
+	}
+
+	// check is there any other active session or not
+	count, err := s.jr.UserTokensCount(ctx, user.Id)
+	if err != nil {
+		logger.Log(logger.WARN, errors.Wrap(err, op).Error())
+	}
+
+	logger.Log(logger.INFO, fmt.Sprintf(
+		"%s logged-in", user.Username,
+	))
+
+	return token, count > 1, nil
 }
 
 // Authorize parses jwt token and return related user
