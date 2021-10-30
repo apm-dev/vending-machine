@@ -31,6 +31,7 @@ func InitService(
 		UserService = &Service{
 			ur: ur, jr: jr, jwt: jwt,
 			depositTimeout: depositTimeout,
+			depositLock:    &sync.RWMutex{},
 		}
 	}
 	return UserService

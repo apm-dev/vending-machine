@@ -9,14 +9,15 @@ import (
 )
 
 const (
-	USER_ID_CONTEXT_KEY = "userId"
+	USER_ID_CONTEXT_KEY string = "userId"
 
 	SELLER Role = "seller"
 	BUYER  Role = "buyer"
 )
 
 type (
-	Role string
+	Role      string
+	UserIdKey string
 )
 
 type User struct {
