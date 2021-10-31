@@ -3,15 +3,21 @@ package domain
 import (
 	"context"
 	"time"
+
+	"github.com/pkg/errors"
+	"golang.org/x/crypto/bcrypt"
 )
 
 const (
-	Seller Role = "seller"
-	Buyer  Role = "buyer"
+	USER_ID_CONTEXT_KEY UserIdKey = "userId"
+
+	SELLER Role = "seller"
+	BUYER  Role = "buyer"
 )
 
 type (
-	Role string
+	Role      string
+	UserIdKey string
 )
 
 type User struct {
@@ -22,13 +28,41 @@ type User struct {
 	Deposit  uint   `json:"deposit"`
 }
 
-func NewUser(uname, passwd string, role Role) *User {
+func NewUser(uname, passwd string, role Role) (*User, error) {
+	const op string = "domain.user.NewUser"
+	// storing hash of password for security reasons
+	hash, err := bcrypt.GenerateFromPassword([]byte(passwd), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, errors.Wrap(err, op)
+	}
+
 	return &User{
 		Username: uname,
-		Password: passwd,
+		Password: string(hash),
 		Role:     role,
 		Deposit:  0,
+	}, nil
+}
+
+func (u *User) CheckPassword(password string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
+	return err == nil
+}
+
+func (u *User) AddDeposit(coin Coin) {
+	u.Deposit += uint(coin)
+}
+
+func (u *User) ResetDeposit() {
+	u.Deposit = 0
+}
+
+func UserIdOfContext(ctx context.Context) (uint, error) {
+	uid, ok := ctx.Value(USER_ID_CONTEXT_KEY).(uint)
+	if !ok || uid == 0 {
+		return 0, ErrUserNotFound
 	}
+	return uid, nil
 }
 
 type UserService interface {
@@ -50,12 +84,14 @@ type UserService interface {
 type UserRepository interface {
 	Insert(ctx context.Context, u User) (uint, error)
 	FindById(ctx context.Context, id uint) (*User, error)
+	FindByUsername(ctx context.Context, un string) (*User, error)
 	Update(ctx context.Context, u *User) error
 	Delete(ctx context.Context, id uint) error
 }
 
 type JwtRepository interface {
-	Exists(ctx context.Context, token string) (bool, error)
 	Insert(ctx context.Context, userId uint, token string, ttl time.Duration) error
+	Exists(ctx context.Context, token string) (bool, error)
+	UserTokensCount(ctx context.Context, uid uint) (uint, error)
 	DeleteTokensOfUserExcept(ctx context.Context, userId uint, exceptionToken string) error
 }
