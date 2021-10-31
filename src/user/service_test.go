@@ -29,13 +29,14 @@ func TestDeposit(t *testing.T) {
 		wants   wants
 	}
 
-	to := time.Second * 2
+	tout := time.Second * 2
+	timerCtx := "*context.timerCtx"
 	ur := new(mocks.UserRepository)
 
 	testCases := []testCase{
 		{
-			name:    "should succeed when buyer deposit valid coin",
-			timeout: to,
+			name:    "should succeed when buyer deposits valid coin",
+			timeout: tout,
 			prepare: func() {
 				u := &domain.User{
 					Id:      1,
@@ -43,10 +44,10 @@ func TestDeposit(t *testing.T) {
 					Deposit: 0,
 				}
 				ur.On("FindById",
-					mock.AnythingOfType("*context.timerCtx"), uint(1),
+					mock.AnythingOfType(timerCtx), uint(1),
 				).Return(u, nil).Once()
 				ur.On("Update",
-					mock.AnythingOfType("*context.timerCtx"),
+					mock.AnythingOfType(timerCtx),
 					mock.AnythingOfType("*domain.User"),
 				).Return(nil).Once()
 			},
@@ -57,6 +58,71 @@ func TestDeposit(t *testing.T) {
 			wants: wants{
 				err:     nil,
 				balance: 50,
+			},
+		},
+		{
+			name:    "should fail when buyer deposits invalid coin",
+			timeout: tout,
+			prepare: func() {},
+			args: args{
+				ctx:  context.WithValue(context.Background(), domain.USER_ID_CONTEXT_KEY, uint(1)),
+				coin: 31,
+			},
+			wants: wants{
+				err:     domain.ErrInvalidCoin,
+				balance: 0,
+			},
+		},
+		{
+			name:    "should fail when seller deposits",
+			timeout: tout,
+			prepare: func() {
+				u := &domain.User{
+					Id:      1,
+					Role:    domain.SELLER,
+					Deposit: 0,
+				}
+				ur.On("FindById",
+					mock.AnythingOfType(timerCtx), uint(1),
+				).Return(u, nil).Once()
+			},
+			args: args{
+				ctx:  context.WithValue(context.Background(), domain.USER_ID_CONTEXT_KEY, uint(1)),
+				coin: 5,
+			},
+			wants: wants{
+				err:     domain.ErrUnauthorized,
+				balance: 0,
+			},
+		},
+		{
+			name:    "should fail when userId is missing from context",
+			timeout: tout,
+			prepare: func() {},
+			args: args{
+				ctx:  context.Background(),
+				coin: 5,
+			},
+			wants: wants{
+				err:     domain.ErrInternalServer,
+				balance: 0,
+			},
+		},
+		{
+			name:    "should fail when user repository returns error",
+			timeout: tout,
+			prepare: func() {
+				ur.On("FindById",
+					mock.AnythingOfType(timerCtx), uint(1),
+				).Return(nil, domain.ErrUserNotFound).Once()
+			},
+			args: args{
+				ctx:  context.WithValue(context.Background(), domain.USER_ID_CONTEXT_KEY, uint(1)),
+				coin: 5,
+			},
+			wants: wants{
+				err:     domain.ErrInternalServer,
+				balance: 0,
 			},
 		},
 	}

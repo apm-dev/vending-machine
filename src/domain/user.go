@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	USER_ID_CONTEXT_KEY string = "userId"
+	USER_ID_CONTEXT_KEY UserIdKey = "userId"
 
 	SELLER Role = "seller"
 	BUYER  Role = "buyer"
