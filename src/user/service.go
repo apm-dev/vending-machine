@@ -141,10 +141,16 @@ func (s *Service) Authorize(ctx context.Context, token string) (uint, error) {
 }
 
 // TerminateActiveSessions terminates all other active sessions
-func (s *Service) TerminateActiveSessions(ctx context.Context, token string) error {
+func (s *Service) TerminateActiveSessions(ctx context.Context) error {
 	const op string = "user.service.TerminateActiveSessions"
 
-	uid, err := domain.UserIdOfContext(ctx)
+	uid, err := domain.UserIdFromContext(ctx)
+	if err != nil {
+		logger.Log(logger.WARN, errors.Wrap(err, op).Error())
+		return domain.ErrInternalServer
+	}
+
+	token, err := domain.TokenFromContext(ctx)
 	if err != nil {
 		logger.Log(logger.WARN, errors.Wrap(err, op).Error())
 		return domain.ErrInternalServer
@@ -170,7 +176,7 @@ func (s *Service) Deposit(ctx context.Context, coin domain.Coin) (uint, error) {
 		return 0, domain.ErrInvalidCoin
 	}
 
-	uid, err := domain.UserIdOfContext(ctx)
+	uid, err := domain.UserIdFromContext(ctx)
 	if err != nil {
 		return 0, domain.ErrInternalServer
 	}
@@ -210,7 +216,7 @@ func (s *Service) ResetDeposit(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, s.depositTimeout)
 	defer cancel()
 
-	uid, err := domain.UserIdOfContext(ctx)
+	uid, err := domain.UserIdFromContext(ctx)
 	if err != nil {
 		return domain.ErrInternalServer
 	}

@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/apm-dev/vending-machine/domain"
 	"github.com/apm-dev/vending-machine/pkg/httputil"
 	"github.com/labstack/echo"
 )
@@ -28,7 +29,8 @@ func (m *UserMiddleware) JwtAuth(next echo.HandlerFunc) echo.HandlerFunc {
 				nil,
 			))
 		}
-		c.Set("userId", uid)
+		c.Set(string(domain.TOKEN), token)
+		c.Set(string(domain.USER_ID), uid)
 
 		return next(c)
 	}
