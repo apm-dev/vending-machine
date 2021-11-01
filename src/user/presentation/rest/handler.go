@@ -2,7 +2,6 @@ package rest
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/apm-dev/vending-machine/domain"
 	"github.com/apm-dev/vending-machine/pkg/httputil"
@@ -14,10 +13,12 @@ type UserHandler struct {
 	us domain.UserService
 }
 
-func InitUserHandler(e *echo.Echo, us domain.UserService) {
+func InitUserHandler(e *echo.Echo, auth *echo.Group, us domain.UserService) {
 	h := &UserHandler{us}
 	e.POST("/register", h.Register)
 	e.POST("/login", h.Login)
+
+	auth.POST("/logout/all", h.LogoutAll)
 }
 
 func (h *UserHandler) Register(c echo.Context) error {
@@ -36,7 +37,7 @@ func (h *UserHandler) Register(c echo.Context) error {
 	token, err := h.us.Register(
 		c.Request().Context(),
 		rr.Username, rr.Password,
-		domain.Role(strings.ToUpper(rr.Role)),
+		domain.Role(rr.Role),
 	)
 	if err != nil {
 		status := httputil.StatusCode(err)
@@ -80,5 +81,21 @@ func (h *UserHandler) Login(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, httputil.MakeResponse(
 		http.StatusOK, msg, echo.Map{"token": token},
+	))
+}
+
+func (h *UserHandler) LogoutAll(c echo.Context) error {
+	err := h.us.TerminateActiveSessions(c.Request().Context())
+	if err != nil {
+		status := httputil.StatusCode(err)
+		return c.JSON(status, httputil.MakeResponse(
+			status, err.Error(), nil,
+		))
+	}
+
+	return c.JSON(http.StatusOK, httputil.MakeResponse(
+		http.StatusOK,
+		"All other active sessions have been terminated.",
+		nil,
 	))
 }
