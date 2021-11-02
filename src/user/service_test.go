@@ -52,7 +52,7 @@ func TestDeposit(t *testing.T) {
 				).Return(nil).Once()
 			},
 			args: args{
-				ctx:  context.WithValue(context.Background(), domain.USER_ID_CONTEXT_KEY, uint(1)),
+				ctx:  context.WithValue(context.Background(), domain.USER_ID, uint(1)),
 				coin: 50,
 			},
 			wants: wants{
@@ -65,7 +65,7 @@ func TestDeposit(t *testing.T) {
 			timeout: tout,
 			prepare: func() {},
 			args: args{
-				ctx:  context.WithValue(context.Background(), domain.USER_ID_CONTEXT_KEY, uint(1)),
+				ctx:  context.WithValue(context.Background(), domain.USER_ID, uint(1)),
 				coin: 31,
 			},
 			wants: wants{
@@ -87,7 +87,7 @@ func TestDeposit(t *testing.T) {
 				).Return(u, nil).Once()
 			},
 			args: args{
-				ctx:  context.WithValue(context.Background(), domain.USER_ID_CONTEXT_KEY, uint(1)),
+				ctx:  context.WithValue(context.Background(), domain.USER_ID, uint(1)),
 				coin: 5,
 			},
 			wants: wants{
@@ -117,7 +117,7 @@ func TestDeposit(t *testing.T) {
 				).Return(nil, domain.ErrUserNotFound).Once()
 			},
 			args: args{
-				ctx:  context.WithValue(context.Background(), domain.USER_ID_CONTEXT_KEY, uint(1)),
+				ctx:  context.WithValue(context.Background(), domain.USER_ID, uint(1)),
 				coin: 5,
 			},
 			wants: wants{

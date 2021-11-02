@@ -9,15 +9,16 @@ import (
 )
 
 const (
-	USER_ID_CONTEXT_KEY UserIdKey = "userId"
+	USER_ID ContextKey = "userId"
+	TOKEN   ContextKey = "token"
 
 	SELLER Role = "seller"
 	BUYER  Role = "buyer"
 )
 
 type (
-	Role      string
-	UserIdKey string
+	Role       string
+	ContextKey string
 )
 
 type User struct {
@@ -57,12 +58,20 @@ func (u *User) ResetDeposit() {
 	u.Deposit = 0
 }
 
-func UserIdOfContext(ctx context.Context) (uint, error) {
-	uid, ok := ctx.Value(USER_ID_CONTEXT_KEY).(uint)
+func UserIdFromContext(ctx context.Context) (uint, error) {
+	uid, ok := ctx.Value(USER_ID).(uint)
 	if !ok || uid == 0 {
-		return 0, ErrUserNotFound
+		return 0, ErrInternalServer
 	}
 	return uid, nil
+}
+
+func TokenFromContext(ctx context.Context) (string, error) {
+	token, ok := ctx.Value(USER_ID).(string)
+	if !ok || token == "" {
+		return "", ErrInternalServer
+	}
+	return token, nil
 }
 
 type UserService interface {
@@ -74,7 +83,7 @@ type UserService interface {
 	// Authorize parses jwt token and return related user
 	Authorize(ctx context.Context, token string) (uint, error)
 	// TerminateActiveSessions terminates all other active sessions
-	TerminateActiveSessions(ctx context.Context, token string) error
+	TerminateActiveSessions(ctx context.Context) error
 	// Deposit increases buyer(user) deposit
 	Deposit(ctx context.Context, coin Coin) (uint, error)
 	// ResetDeposit reset buyer(user) deposits back to zero
