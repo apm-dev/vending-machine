@@ -73,7 +73,7 @@ func (r *UserRepository) Update(ctx context.Context, u *domain.User) error {
 func (r *UserRepository) Delete(ctx context.Context, id uint) error {
 	const op string = "user.data.pgsql.user_repo.Delete"
 
-	err := r.db.WithContext(ctx).Delete(&User{}, "id = ?", id).Error
+	err := r.db.WithContext(ctx).Delete(&User{}, id).Error
 	if err != nil {
 		return errors.Wrap(err, op)
 	}

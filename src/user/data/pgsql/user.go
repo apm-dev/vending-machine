@@ -6,7 +6,6 @@ import (
 )
 
 type User struct {
-	ID       uint
 	Username string `gorm:"uniqueIndex;size:128;column:username"`
 	Password string `gorm:"size:128;column:password"`
 	Role     string `gorm:"size:128;column:role"`
@@ -28,10 +27,13 @@ func (u *User) FromDomain(user *domain.User) {
 
 func (u *User) ToDomain() *domain.User {
 	return &domain.User{
-		Id:       u.ID,
-		Username: u.Username,
-		Password: u.Password,
-		Role:     domain.Role(u.Role),
-		Deposit:  u.Deposit,
+		Id:        u.ID,
+		Username:  u.Username,
+		Password:  u.Password,
+		Role:      domain.Role(u.Role),
+		Deposit:   u.Deposit,
+		CreatedAt: u.CreatedAt,
+		UpdatedAt: u.UpdatedAt,
+		DeletedAt: u.DeletedAt.Time,
 	}
 }

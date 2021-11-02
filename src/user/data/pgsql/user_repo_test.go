@@ -45,7 +45,8 @@ func TestUserRepoTestSuite(t *testing.T) {
 
 func (s *UserRepoTestSuite) TestInsert() {
 	// arrange
-	ctx, _ := context.WithTimeout(context.Background(), time.Second*2)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
+	defer cancel()
 	user, err := domain.NewUser("uname", "passwd", "seller")
 	user.Id = 5
 	if err != nil {
