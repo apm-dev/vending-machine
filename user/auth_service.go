@@ -19,7 +19,7 @@ func (s *Service) Register(ctx context.Context, uname, pass string, role domain.
 		return "", domain.ErrInternalServer
 	}
 	// persist user
-	_, err = s.ur.Insert(ctx, *user)
+	user.Id, err = s.ur.Insert(ctx, *user)
 	if err != nil {
 		if errors.Is(err, domain.ErrUserAlreadyExists) {
 			return "", domain.ErrUserAlreadyExists
@@ -30,6 +30,13 @@ func (s *Service) Register(ctx context.Context, uname, pass string, role domain.
 
 	// generate jwt token with user claims
 	token, err := s.jwt.Generate(user)
+	if err != nil {
+		logger.Log(logger.ERROR, errors.Wrap(err, op).Error())
+		return "", domain.ErrInternalServer
+	}
+
+	// persist jwt token
+	err = s.jr.Insert(ctx, user.Id, token, s.jwt.tokenDuration)
 	if err != nil {
 		logger.Log(logger.ERROR, errors.Wrap(err, op).Error())
 		return "", domain.ErrInternalServer

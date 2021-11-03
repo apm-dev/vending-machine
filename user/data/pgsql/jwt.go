@@ -5,7 +5,7 @@ import (
 )
 
 type JWT struct {
-	Token     string `gorm:"primaryKey;size:128;column:token"`
+	Token     string `gorm:"primaryKey;column:token"`
 	UserID    uint   `gorm:"column:user_id"`
 	User      User
 	ExpiredAt time.Time `gorm:"column:expired_at"`

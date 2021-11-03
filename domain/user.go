@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"reflect"
 	"time"
 
 	"github.com/pkg/errors"
@@ -73,19 +74,27 @@ func (u *User) ResetDeposit() {
 }
 
 func UserIdFromContext(ctx context.Context) (uint, error) {
-	uid, ok := ctx.Value(USER_ID).(uint)
-	if !ok || uid == 0 {
-		return 0, ErrInternalServer
+	const op string = "domain.user.UserIdFromContext"
+
+	uid := ctx.Value(USER_ID)
+	if id, ok := uid.(uint); !ok || id == 0 {
+		return 0, errors.Errorf("%s: wrong userId type or value %v:%v",
+			op, reflect.TypeOf(uid), uid,
+		)
 	}
-	return uid, nil
+	return uid.(uint), nil
 }
 
 func TokenFromContext(ctx context.Context) (string, error) {
-	token, ok := ctx.Value(USER_ID).(string)
-	if !ok || token == "" {
-		return "", ErrInternalServer
+	const op string = "domain.user.TokenFromContext"
+
+	token := ctx.Value(TOKEN)
+	if t, ok := token.(string); !ok || t == "" {
+		return "", errors.Errorf("%s: wrong token type or value %v:%v",
+			op, reflect.TypeOf(token), token,
+		)
 	}
-	return token, nil
+	return token.(string), nil
 }
 
 type UserService interface {

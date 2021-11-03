@@ -2,6 +2,7 @@ package pgsql
 
 import (
 	"context"
+	"strings"
 
 	"github.com/apm-dev/vending-machine/domain"
 	"github.com/pkg/errors"
@@ -24,6 +25,9 @@ func (r *UserRepository) Insert(ctx context.Context, u domain.User) (uint, error
 
 	err := r.db.WithContext(ctx).Create(&dbUser).Error
 	if err != nil {
+		if strings.Contains(err.Error(), "duplicate") {
+			return 0, errors.Wrap(domain.ErrUserAlreadyExists, op)
+		}
 		return 0, errors.Wrap(err, op)
 	}
 
@@ -79,7 +83,7 @@ func (r *UserRepository) Update(ctx context.Context, u *domain.User) error {
 	dbUser := new(User)
 	dbUser.FromDomain(u)
 
-	err := r.db.WithContext(ctx).Where("id = ?", u.Id).Updates(&dbUser).Error
+	err := r.db.WithContext(ctx).Save(&dbUser).Error
 	if err != nil {
 		return errors.Wrap(err, op)
 	}

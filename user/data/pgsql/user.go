@@ -6,9 +6,9 @@ import (
 )
 
 type User struct {
-	Username string `gorm:"uniqueIndex;size:128;column:username"`
-	Password string `gorm:"size:128;column:password"`
-	Role     string `gorm:"size:128;column:role"`
+	Username string `gorm:"uniqueIndex;size:32;column:username"`
+	Password string `gorm:"size:256;column:password"`
+	Role     string `gorm:"size:32;column:role"`
 	Deposit  uint   `gorm:"column:deposit"`
 	gorm.Model
 }
