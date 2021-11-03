@@ -76,6 +76,7 @@ func main() {
 	e := echo.New()
 	e.Use(middleware.Secure())
 	e.Use(middleware.BodyLimit("1M"))
+	e.Use(middleware.CORS())
 	// echo validator
 	e.Validator = &CustomValidator{validator: validator.New()}
 	// echo middlewares
