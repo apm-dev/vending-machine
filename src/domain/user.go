@@ -12,6 +12,7 @@ const (
 	USER_ID ContextKey = "userId"
 	TOKEN   ContextKey = "token"
 
+	ADMIN  Role = "admin"
 	SELLER Role = "seller"
 	BUYER  Role = "buyer"
 )
@@ -34,18 +35,28 @@ type User struct {
 
 func NewUser(uname, passwd string, role Role) (*User, error) {
 	const op string = "domain.user.NewUser"
-	// storing hash of password for security reasons
-	hash, err := bcrypt.GenerateFromPassword([]byte(passwd), bcrypt.DefaultCost)
+
+	user := &User{
+		Username: uname,
+		Role:     role,
+		Deposit:  0,
+	}
+	err := user.SetPassword(passwd)
 	if err != nil {
 		return nil, errors.Wrap(err, op)
 	}
+	return user, nil
+}
 
-	return &User{
-		Username: uname,
-		Password: string(hash),
-		Role:     role,
-		Deposit:  0,
-	}, nil
+func (u *User) SetPassword(passwd string) error {
+	const op string = "domain.user.SetPassword"
+	// storing hash of password for security reasons
+	hash, err := bcrypt.GenerateFromPassword([]byte(passwd), bcrypt.DefaultCost)
+	if err != nil {
+		return errors.Wrap(err, op)
+	}
+	u.Password = string(hash)
+	return nil
 }
 
 func (u *User) CheckPassword(password string) bool {
@@ -90,13 +101,19 @@ type UserService interface {
 	// Deposit increases buyer(user) deposit
 	Deposit(ctx context.Context, coin Coin) (uint, error)
 	// ResetDeposit reset buyer(user) deposits back to zero
-	ResetDeposit(ctx context.Context) error
+	ResetDeposit(ctx context.Context) ([]uint, error)
+	// User CRUD
+	Update(ctx context.Context, passwd string) error
+	Delete(ctx context.Context) ([]uint, error)
+	Get(ctx context.Context, id uint) (*User, error)
+	List(ctx context.Context) ([]User, error)
 }
 
 type UserRepository interface {
 	Insert(ctx context.Context, u User) (uint, error)
 	FindById(ctx context.Context, id uint) (*User, error)
 	FindByUsername(ctx context.Context, un string) (*User, error)
+	List(ctx context.Context) ([]User, error)
 	Update(ctx context.Context, u *User) error
 	Delete(ctx context.Context, id uint) error
 }

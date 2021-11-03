@@ -56,6 +56,23 @@ func (r *UserRepository) FindByUsername(ctx context.Context, un string) (*domain
 	return dbUser.ToDomain(), nil
 }
 
+func (r *UserRepository) List(ctx context.Context) ([]domain.User, error) {
+	const op string = "user.data.pgsql.user_repo.List"
+
+	dbUsers := make([]User, 0)
+
+	err := r.db.WithContext(ctx).Find(&dbUsers).Error
+	if err != nil {
+		return nil, errors.Wrap(err, op)
+	}
+
+	users := make([]domain.User, len(dbUsers))
+	for _, u := range dbUsers {
+		users = append(users, *u.ToDomain())
+	}
+	return users, nil
+}
+
 func (r *UserRepository) Update(ctx context.Context, u *domain.User) error {
 	const op string = "user.data.pgsql.user_repo.Update"
 

@@ -3,39 +3,11 @@ package user
 import (
 	"context"
 	"fmt"
-	"sync"
-	"time"
 
 	"github.com/apm-dev/vending-machine/domain"
 	"github.com/apm-dev/vending-machine/pkg/logger"
 	"github.com/pkg/errors"
 )
-
-type Service struct {
-	ur             domain.UserRepository
-	jr             domain.JwtRepository
-	jwt            *JWTManager
-	depositTimeout time.Duration
-	depositLock    *sync.RWMutex
-}
-
-var UserService *Service
-
-func InitService(
-	ur domain.UserRepository,
-	jr domain.JwtRepository,
-	jwt *JWTManager,
-	depositTimeout time.Duration,
-) domain.UserService {
-	if UserService == nil {
-		UserService = &Service{
-			ur: ur, jr: jr, jwt: jwt,
-			depositTimeout: depositTimeout,
-			depositLock:    &sync.RWMutex{},
-		}
-	}
-	return UserService
-}
 
 // Register creates new user and return jwt token or error
 func (s *Service) Register(ctx context.Context, uname, pass string, role domain.Role) (string, error) {
@@ -157,86 +129,6 @@ func (s *Service) TerminateActiveSessions(ctx context.Context) error {
 	}
 
 	err = s.jr.DeleteTokensOfUserExcept(ctx, uid, token)
-	if err != nil {
-		logger.Log(logger.ERROR, errors.Wrap(err, op).Error())
-		return domain.ErrInternalServer
-	}
-
-	return nil
-}
-
-// Deposit increases buyer(user) deposit
-func (s *Service) Deposit(ctx context.Context, coin domain.Coin) (uint, error) {
-	const op string = "user.service.Deposit"
-
-	ctx, cancel := context.WithTimeout(ctx, s.depositTimeout)
-	defer cancel()
-
-	if !coin.IsValid() {
-		return 0, domain.ErrInvalidCoin
-	}
-
-	uid, err := domain.UserIdFromContext(ctx)
-	if err != nil {
-		return 0, domain.ErrInternalServer
-	}
-
-	user, err := s.ur.FindById(ctx, uid)
-	if err != nil {
-		logger.Log(logger.ERROR, errors.Wrap(err, op).Error())
-		return 0, domain.ErrInternalServer
-	}
-
-	if user.Role != domain.BUYER {
-		return 0, domain.ErrUnauthorized
-	}
-
-	// use locks because of concurrent requests
-	// we make sure to add user deposits without conflict
-	// there are better ways to handle this kind of issue
-	// but it's just for POC
-	s.depositLock.Lock()
-	defer s.depositLock.Unlock()
-
-	user.AddDeposit(coin)
-
-	err = s.ur.Update(ctx, user)
-	if err != nil {
-		logger.Log(logger.ERROR, errors.Wrap(err, op).Error())
-		return 0, domain.ErrInternalServer
-	}
-
-	return user.Deposit, nil
-}
-
-// ResetDeposit reset buyer(user) deposits back to zero
-func (s *Service) ResetDeposit(ctx context.Context) error {
-	const op string = "user.service.ResetDeposit"
-
-	ctx, cancel := context.WithTimeout(ctx, s.depositTimeout)
-	defer cancel()
-
-	uid, err := domain.UserIdFromContext(ctx)
-	if err != nil {
-		return domain.ErrInternalServer
-	}
-
-	user, err := s.ur.FindById(ctx, uid)
-	if err != nil {
-		logger.Log(logger.ERROR, errors.Wrap(err, op).Error())
-		return domain.ErrInternalServer
-	}
-
-	if user.Role != domain.BUYER {
-		return domain.ErrUnauthorized
-	}
-
-	s.depositLock.Lock()
-	defer s.depositLock.Unlock()
-
-	user.ResetDeposit()
-
-	err = s.ur.Update(ctx, user)
 	if err != nil {
 		logger.Log(logger.ERROR, errors.Wrap(err, op).Error())
 		return domain.ErrInternalServer
