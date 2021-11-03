@@ -13,6 +13,7 @@ import (
 	"github.com/apm-dev/vending-machine/user/presentation/rest/middlewares"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
 	"github.com/spf13/viper"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -73,6 +74,7 @@ func main() {
 
 	// presentation (delivery/controller)
 	e := echo.New()
+	e.Use(middleware.Secure())
 	// echo validator
 	e.Validator = &CustomValidator{validator: validator.New()}
 	// echo middlewares
