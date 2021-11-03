@@ -52,7 +52,11 @@ func TestDeposit(t *testing.T) {
 				).Return(nil).Once()
 			},
 			args: args{
-				ctx:  context.WithValue(context.Background(), domain.USER_ID, uint(1)),
+				ctx: context.WithValue(context.Background(), domain.USER, &domain.User{
+					Id:      1,
+					Role:    domain.BUYER,
+					Deposit: 0,
+				}),
 				coin: 50,
 			},
 			wants: wants{
@@ -65,7 +69,7 @@ func TestDeposit(t *testing.T) {
 			timeout: tout,
 			prepare: func() {},
 			args: args{
-				ctx:  context.WithValue(context.Background(), domain.USER_ID, uint(1)),
+				ctx:  context.WithValue(context.Background(), domain.USER, &domain.User{}),
 				coin: 31,
 			},
 			wants: wants{
@@ -87,7 +91,11 @@ func TestDeposit(t *testing.T) {
 				).Return(u, nil).Once()
 			},
 			args: args{
-				ctx:  context.WithValue(context.Background(), domain.USER_ID, uint(1)),
+				ctx: context.WithValue(context.Background(), domain.USER, &domain.User{
+					Id:      1,
+					Role:    domain.SELLER,
+					Deposit: 0,
+				}),
 				coin: 5,
 			},
 			wants: wants{
@@ -96,7 +104,7 @@ func TestDeposit(t *testing.T) {
 			},
 		},
 		{
-			name:    "should fail when userId is missing from context",
+			name:    "should fail when user is missing from context",
 			timeout: tout,
 			prepare: func() {},
 			args: args{
@@ -117,7 +125,7 @@ func TestDeposit(t *testing.T) {
 				).Return(nil, domain.ErrUserNotFound).Once()
 			},
 			args: args{
-				ctx:  context.WithValue(context.Background(), domain.USER_ID, uint(1)),
+				ctx:  context.WithValue(context.Background(), domain.USER, &domain.User{Id: 1, Role: domain.BUYER}),
 				coin: 5,
 			},
 			wants: wants{

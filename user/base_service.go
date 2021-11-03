@@ -40,7 +40,7 @@ func InitService(
 func (s *Service) Update(ctx context.Context, passwd string) error {
 	const op string = "user.service.Update"
 
-	user, err := s.fetchContextUser(ctx)
+	user, err := s.refetchContextUserFromDB(ctx)
 	if err != nil {
 		logger.Log(logger.ERROR, errors.Wrap(err, op).Error())
 		return domain.ErrInternalServer
@@ -63,7 +63,7 @@ func (s *Service) Update(ctx context.Context, passwd string) error {
 func (s *Service) Delete(ctx context.Context) ([]uint, error) {
 	const op string = "user.service.Delete"
 
-	user, err := s.fetchContextUser(ctx)
+	user, err := s.refetchContextUserFromDB(ctx)
 	if err != nil {
 		logger.Log(logger.ERROR, errors.Wrap(err, op).Error())
 		return nil, domain.ErrInternalServer
@@ -82,7 +82,7 @@ func (s *Service) Delete(ctx context.Context) ([]uint, error) {
 func (s *Service) Get(ctx context.Context, id uint) (*domain.User, error) {
 	const op string = "user.service.Get"
 
-	user, err := s.fetchContextUser(ctx)
+	user, err := s.refetchContextUserFromDB(ctx)
 	if err != nil {
 		logger.Log(logger.ERROR, errors.Wrap(err, op).Error())
 		return nil, domain.ErrInternalServer
@@ -105,7 +105,7 @@ func (s *Service) Get(ctx context.Context, id uint) (*domain.User, error) {
 func (s *Service) List(ctx context.Context) ([]domain.User, error) {
 	const op string = "user.service.List"
 
-	user, err := s.fetchContextUser(ctx)
+	user, err := s.refetchContextUserFromDB(ctx)
 	if err != nil {
 		logger.Log(logger.ERROR, errors.Wrap(err, op).Error())
 		return nil, domain.ErrInternalServer

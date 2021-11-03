@@ -5,6 +5,7 @@ import "github.com/pkg/errors"
 var (
 	ErrInternalServer = errors.New("internal server error")
 	ErrInvalidParams  = errors.New("invalid parameters")
+	ErrInvalidCost    = errors.New("cost must be a multiple of five")
 
 	ErrUserAlreadyExists = errors.New("user already exists")
 	ErrUserNotFound      = errors.New("user not found")

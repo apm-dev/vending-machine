@@ -33,7 +33,7 @@ func (m *UserMiddleware) JwtAuth(next echo.HandlerFunc) echo.HandlerFunc {
 		// set userId and token on context for later uses
 		ctx := c.Request().Context()
 		ctx = context.WithValue(ctx, domain.TOKEN, token)
-		ctx = context.WithValue(ctx, domain.USER_ID, uid)
+		ctx = context.WithValue(ctx, domain.USER, uid)
 		c.SetRequest(c.Request().Clone(ctx))
 
 		return next(c)

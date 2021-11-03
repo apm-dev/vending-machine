@@ -123,7 +123,7 @@ func (s *Service) Authorize(ctx context.Context, token string) (uint, error) {
 func (s *Service) TerminateActiveSessions(ctx context.Context) error {
 	const op string = "user.service.TerminateActiveSessions"
 
-	uid, err := domain.UserIdFromContext(ctx)
+	u, err := domain.UserFromContext(ctx)
 	if err != nil {
 		logger.Log(logger.WARN, errors.Wrap(err, op).Error())
 		return domain.ErrInternalServer
@@ -135,7 +135,7 @@ func (s *Service) TerminateActiveSessions(ctx context.Context) error {
 		return domain.ErrInternalServer
 	}
 
-	err = s.jr.DeleteTokensOfUserExcept(ctx, uid, token)
+	err = s.jr.DeleteTokensOfUserExcept(ctx, u.Id, token)
 	if err != nil {
 		logger.Log(logger.ERROR, errors.Wrap(err, op).Error())
 		return domain.ErrInternalServer

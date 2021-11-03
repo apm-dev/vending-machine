@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	USER_ID ContextKey = "userId"
-	TOKEN   ContextKey = "token"
+	USER  ContextKey = "user"
+	TOKEN ContextKey = "token"
 
 	ADMIN  Role = "admin"
 	SELLER Role = "seller"
@@ -73,16 +73,16 @@ func (u *User) ResetDeposit() {
 	u.Deposit = 0
 }
 
-func UserIdFromContext(ctx context.Context) (uint, error) {
+func UserFromContext(ctx context.Context) (*User, error) {
 	const op string = "domain.user.UserIdFromContext"
 
-	uid := ctx.Value(USER_ID)
-	if id, ok := uid.(uint); !ok || id == 0 {
-		return 0, errors.Errorf("%s: wrong userId type or value %v:%v",
-			op, reflect.TypeOf(uid), uid,
+	user := ctx.Value(USER)
+	if u, ok := user.(*User); !ok || u == nil {
+		return nil, errors.Errorf("%s: wrong user type or value %v:%v",
+			op, reflect.TypeOf(user), user,
 		)
 	}
-	return uid.(uint), nil
+	return user.(*User), nil
 }
 
 func TokenFromContext(ctx context.Context) (string, error) {
