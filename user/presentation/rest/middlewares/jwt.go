@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"context"
 	"net/http"
 	"strings"
 
@@ -29,8 +30,11 @@ func (m *UserMiddleware) JwtAuth(next echo.HandlerFunc) echo.HandlerFunc {
 				nil,
 			))
 		}
-		c.Set(string(domain.TOKEN), token)
-		c.Set(string(domain.USER_ID), uid)
+		// set userId and token on context for later uses
+		ctx := c.Request().Context()
+		ctx = context.WithValue(ctx, domain.TOKEN, token)
+		ctx = context.WithValue(ctx, domain.USER_ID, uid)
+		c.SetRequest(c.Request().Clone(ctx))
 
 		return next(c)
 	}

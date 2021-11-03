@@ -19,7 +19,7 @@ func NewLogcat(lvl Level) Logger {
 func (l *Logcat) Log(lvl Level, msg string) {
 	if lvl <= l.lvl && lvl != SILENT {
 		c := l.getColor(lvl)
-		log.Printf("%s%s %s\t%s\n", color.YellowString("Flash"), color.CyanString("Chat"), lvl, c(msg))
+		log.Printf("%s%s %s\t%s\n", color.YellowString("Vending"), color.CyanString("Machine"), lvl, c(msg))
 	}
 }
 
