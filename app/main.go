@@ -75,6 +75,7 @@ func main() {
 	// presentation (delivery/controller)
 	e := echo.New()
 	e.Use(middleware.Secure())
+	e.Use(middleware.BodyLimit("1M"))
 	// echo validator
 	e.Validator = &CustomValidator{validator: validator.New()}
 	// echo middlewares
