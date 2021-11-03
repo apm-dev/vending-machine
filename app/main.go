@@ -56,8 +56,9 @@ func main() {
 	}()
 
 	// data (repository)
-	db.AutoMigrate(&userPgsql.User{}, &userPgsql.JWT{})
-	
+	err = db.AutoMigrate(&userPgsql.User{}, &userPgsql.JWT{})
+	fatalOnError(err)
+
 	ur := userPgsql.InitUserRepository(db)
 	jr := userPgsql.InitJwtRepository(db)
 	jwt := user.NewJWTManager(

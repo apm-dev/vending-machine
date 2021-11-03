@@ -46,7 +46,11 @@ func (s *Service) Update(ctx context.Context, passwd string) error {
 		return domain.ErrInternalServer
 	}
 
-	user.SetPassword(passwd)
+	err = user.SetPassword(passwd)
+	if err != nil {
+		logger.Log(logger.ERROR, errors.Wrap(err, op).Error())
+		return domain.ErrInternalServer
+	}
 
 	err = s.ur.Update(ctx, user)
 	if err != nil {

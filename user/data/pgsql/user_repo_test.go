@@ -30,7 +30,10 @@ func (s *UserRepoTestSuite) SetupTest() {
 		panic(err)
 	}
 
-	s.db.AutoMigrate(&pgsql.User{})
+	err = s.db.AutoMigrate(&pgsql.User{})
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (s *UserRepoTestSuite) TearDownTest() {
