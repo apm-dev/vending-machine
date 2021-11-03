@@ -60,12 +60,7 @@ func (s *Service) ResetDeposit(ctx context.Context) ([]uint, error) {
 	ctx, cancel := context.WithTimeout(ctx, s.depositTimeout)
 	defer cancel()
 
-	uid, err := domain.UserIdFromContext(ctx)
-	if err != nil {
-		return nil, domain.ErrInternalServer
-	}
-
-	user, err := s.ur.FindById(ctx, uid)
+	user, err := s.fetchContextUser(ctx)
 	if err != nil {
 		logger.Log(logger.ERROR, errors.Wrap(err, op).Error())
 		return nil, domain.ErrInternalServer
@@ -86,7 +81,7 @@ func (s *Service) ResetDeposit(ctx context.Context) ([]uint, error) {
 		logger.Log(logger.ERROR, errors.Wrap(err, op).Error())
 		return nil, domain.ErrInternalServer
 	}
-
+	// calculate user refund with valid coins
 	refund := algo.MinimumNumberOfElementsWhoseSumIs(domain.Coins, deposit)
 	return refund, nil
 }
