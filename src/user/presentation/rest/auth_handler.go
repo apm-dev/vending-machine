@@ -10,13 +10,8 @@ import (
 )
 
 func (h *UserHandler) Register(c echo.Context) error {
-	rr := new(requests.Register)
-	if err := c.Bind(rr); err != nil {
-		return c.JSON(http.StatusBadRequest, httputil.MakeResponse(
-			http.StatusBadRequest, err.Error(), nil,
-		))
-	}
-	if err := c.Validate(rr); err != nil {
+	req := new(requests.Register)
+	if err := httputil.BindAndValidate(c, req); err != nil {
 		return c.JSON(http.StatusBadRequest, httputil.MakeResponse(
 			http.StatusBadRequest, err.Error(), nil,
 		))
@@ -24,8 +19,8 @@ func (h *UserHandler) Register(c echo.Context) error {
 
 	token, err := h.us.Register(
 		c.Request().Context(),
-		rr.Username, rr.Password,
-		domain.Role(rr.Role),
+		req.Username, req.Password,
+		domain.Role(req.Role),
 	)
 	if err != nil {
 		status := httputil.StatusCode(err)
@@ -35,18 +30,13 @@ func (h *UserHandler) Register(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, httputil.MakeResponse(
-		http.StatusOK, "welcome "+rr.Username, echo.Map{"token": token},
+		http.StatusOK, "welcome "+req.Username, echo.Map{"token": token},
 	))
 }
 
 func (h *UserHandler) Login(c echo.Context) error {
-	rr := new(requests.Login)
-	if err := c.Bind(rr); err != nil {
-		return c.JSON(http.StatusBadRequest, httputil.MakeResponse(
-			http.StatusBadRequest, err.Error(), nil,
-		))
-	}
-	if err := c.Validate(rr); err != nil {
+	req := new(requests.Login)
+	if err := httputil.BindAndValidate(c, req); err != nil {
 		return c.JSON(http.StatusBadRequest, httputil.MakeResponse(
 			http.StatusBadRequest, err.Error(), nil,
 		))
@@ -54,7 +44,7 @@ func (h *UserHandler) Login(c echo.Context) error {
 
 	token, activeSessions, err := h.us.Login(
 		c.Request().Context(),
-		rr.Username, rr.Password,
+		req.Username, req.Password,
 	)
 	if err != nil {
 		status := httputil.StatusCode(err)
@@ -63,7 +53,7 @@ func (h *UserHandler) Login(c echo.Context) error {
 		))
 	}
 	// notify the user if there was another active session
-	msg := "welcome " + rr.Username
+	msg := "welcome " + req.Username
 	if activeSessions {
 		msg += ", there is another active session."
 	}
@@ -85,5 +75,40 @@ func (h *UserHandler) LogoutAll(c echo.Context) error {
 		http.StatusOK,
 		"All other active sessions have been terminated.",
 		nil,
+	))
+}
+
+func (h *UserHandler) UpdatePassword(c echo.Context) error {
+	req := new(requests.UpdatePassword)
+	if err := httputil.BindAndValidate(c, req); err != nil {
+		return c.JSON(http.StatusBadRequest, httputil.MakeResponse(
+			http.StatusBadRequest, err.Error(), nil,
+		))
+	}
+
+	err := h.us.Update(c.Request().Context(), req.Password)
+	if err != nil {
+		status := httputil.StatusCode(err)
+		return c.JSON(status, httputil.MakeResponse(
+			status, err.Error(), nil,
+		))
+	}
+
+	return c.JSON(http.StatusOK, httputil.MakeResponse(
+		http.StatusOK, "Password updated.", nil,
+	))
+}
+
+func (h *UserHandler) DeleteAccount(c echo.Context) error {
+	refund, err := h.us.Delete(c.Request().Context())
+	if err != nil {
+		status := httputil.StatusCode(err)
+		return c.JSON(status, httputil.MakeResponse(
+			status, err.Error(), nil,
+		))
+	}
+
+	return c.JSON(http.StatusOK, httputil.MakeResponse(
+		http.StatusOK, "Account deleted.", refund,
 	))
 }
