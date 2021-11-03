@@ -10,19 +10,14 @@ import (
 )
 
 func (h *UserHandler) Deposit(c echo.Context) error {
-	rr := new(requests.Deposit)
-	if err := c.Bind(rr); err != nil {
-		return c.JSON(http.StatusBadRequest, httputil.MakeResponse(
-			http.StatusBadRequest, err.Error(), nil,
-		))
-	}
-	if err := c.Validate(rr); err != nil {
+	req := new(requests.Deposit)
+	if err := httputil.BindAndValidate(c, req); err != nil {
 		return c.JSON(http.StatusBadRequest, httputil.MakeResponse(
 			http.StatusBadRequest, err.Error(), nil,
 		))
 	}
 
-	b, err := h.us.Deposit(c.Request().Context(), domain.Coin(rr.Coin))
+	b, err := h.us.Deposit(c.Request().Context(), domain.Coin(req.Coin))
 	if err != nil {
 		status := httputil.StatusCode(err)
 		return c.JSON(status, httputil.MakeResponse(
