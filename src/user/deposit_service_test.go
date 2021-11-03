@@ -91,7 +91,7 @@ func TestDeposit(t *testing.T) {
 				coin: 5,
 			},
 			wants: wants{
-				err:     domain.ErrUnauthorized,
+				err:     domain.ErrPermissionDenied,
 				balance: 0,
 			},
 		},
