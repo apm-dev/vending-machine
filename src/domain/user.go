@@ -90,7 +90,12 @@ type UserService interface {
 	// Deposit increases buyer(user) deposit
 	Deposit(ctx context.Context, coin Coin) (uint, error)
 	// ResetDeposit reset buyer(user) deposits back to zero
-	ResetDeposit(ctx context.Context) error
+	ResetDeposit(ctx context.Context) ([]uint, error)
+	// User CRUD
+	Update(ctx context.Context, passwd string) error
+	Delete(ctx context.Context) ([]uint, error)
+	Get(ctx context.Context, id uint) (*User, error)
+	List(ctx context.Context) ([]User, error)
 }
 
 type UserRepository interface {

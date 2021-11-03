@@ -10,6 +10,8 @@ const (
 
 type Coin uint
 
+var Coins []uint = []uint{5, 10, 20, 50, 100}
+
 func (c Coin) IsValid() bool {
 	switch c {
 	case 5:

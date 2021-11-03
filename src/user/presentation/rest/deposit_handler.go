@@ -36,7 +36,7 @@ func (h *UserHandler) Deposit(c echo.Context) error {
 }
 
 func (h *UserHandler) ResetDeposit(c echo.Context) error {
-	err := h.us.ResetDeposit(c.Request().Context())
+	refund, err := h.us.ResetDeposit(c.Request().Context())
 	if err != nil {
 		status := httputil.StatusCode(err)
 		return c.JSON(status, httputil.MakeResponse(
@@ -45,6 +45,6 @@ func (h *UserHandler) ResetDeposit(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, httputil.MakeResponse(
-		http.StatusOK, "", echo.Map{"balance": 0},
+		http.StatusOK, "", echo.Map{"refund": refund},
 	))
 }
