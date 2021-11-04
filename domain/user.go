@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	USER_ID ContextKey = "userId"
-	TOKEN   ContextKey = "token"
+	USER  ContextKey = "user"
+	TOKEN ContextKey = "token"
 
 	ADMIN  Role = "admin"
 	SELLER Role = "seller"
@@ -73,16 +73,16 @@ func (u *User) ResetDeposit() {
 	u.Deposit = 0
 }
 
-func UserIdFromContext(ctx context.Context) (uint, error) {
+func UserFromContext(ctx context.Context) (*User, error) {
 	const op string = "domain.user.UserIdFromContext"
 
-	uid := ctx.Value(USER_ID)
-	if id, ok := uid.(uint); !ok || id == 0 {
-		return 0, errors.Errorf("%s: wrong userId type or value %v:%v",
-			op, reflect.TypeOf(uid), uid,
+	user := ctx.Value(USER)
+	if u, ok := user.(*User); !ok || u == nil {
+		return nil, errors.Errorf("%s: wrong user type or value %v:%v",
+			op, reflect.TypeOf(user), user,
 		)
 	}
-	return uid.(uint), nil
+	return user.(*User), nil
 }
 
 func TokenFromContext(ctx context.Context) (string, error) {
@@ -104,7 +104,7 @@ type UserService interface {
 	// which says is there another active session using this account or not
 	Login(ctx context.Context, uname, pass string) (string, bool, error)
 	// Authorize parses jwt token and return related user
-	Authorize(ctx context.Context, token string) (uint, error)
+	Authorize(ctx context.Context, token string) (*User, error)
 	// TerminateActiveSessions terminates all other active sessions
 	TerminateActiveSessions(ctx context.Context) error
 	// Deposit increases buyer(user) deposit

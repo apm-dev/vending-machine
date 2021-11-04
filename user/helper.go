@@ -7,15 +7,15 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (s *Service) fetchContextUser(ctx context.Context) (*domain.User, error) {
+func (s *Service) refetchContextUserFromDB(ctx context.Context) (*domain.User, error) {
 	const op string = "user.helper.fetchContextUser"
 
-	uid, err := domain.UserIdFromContext(ctx)
+	u, err := domain.UserFromContext(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, op)
 	}
 
-	user, err := s.ur.FindById(ctx, uid)
+	user, err := s.ur.FindById(ctx, u.Id)
 	if err != nil {
 		return nil, errors.Wrap(err, op)
 	}

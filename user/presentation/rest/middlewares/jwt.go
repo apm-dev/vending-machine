@@ -22,7 +22,7 @@ func (m *UserMiddleware) JwtAuth(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 
 		token = strings.TrimSpace(strings.Replace(token, "Bearer", "", 1))
-		uid, err := m.us.Authorize(c.Request().Context(), token)
+		user, err := m.us.Authorize(c.Request().Context(), token)
 		if err != nil {
 			return c.JSON(http.StatusUnauthorized, httputil.MakeResponse(
 				http.StatusUnauthorized,
@@ -33,7 +33,7 @@ func (m *UserMiddleware) JwtAuth(next echo.HandlerFunc) echo.HandlerFunc {
 		// set userId and token on context for later uses
 		ctx := c.Request().Context()
 		ctx = context.WithValue(ctx, domain.TOKEN, token)
-		ctx = context.WithValue(ctx, domain.USER_ID, uid)
+		ctx = context.WithValue(ctx, domain.USER, user)
 		c.SetRequest(c.Request().Clone(ctx))
 
 		return next(c)
