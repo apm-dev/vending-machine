@@ -13,7 +13,7 @@ import (
 func (s *Service) Deposit(ctx context.Context, coin domain.Coin) (uint, error) {
 	const op string = "user.service.Deposit"
 
-	ctx, cancel := context.WithTimeout(ctx, s.depositTimeout)
+	ctx, cancel := context.WithTimeout(ctx, s.dtout)
 	defer cancel()
 
 	if !coin.IsValid() {
@@ -34,8 +34,8 @@ func (s *Service) Deposit(ctx context.Context, coin domain.Coin) (uint, error) {
 	// we make sure to add user deposits without conflict
 	// there are better ways to handle this kind of issue
 	// but it's just for POC
-	s.depositLock.Lock()
-	defer s.depositLock.Unlock()
+	s.dl.Lock()
+	defer s.dl.Unlock()
 
 	user.AddDeposit(coin)
 
@@ -52,7 +52,7 @@ func (s *Service) Deposit(ctx context.Context, coin domain.Coin) (uint, error) {
 func (s *Service) ResetDeposit(ctx context.Context) ([]uint, error) {
 	const op string = "user.service.ResetDeposit"
 
-	ctx, cancel := context.WithTimeout(ctx, s.depositTimeout)
+	ctx, cancel := context.WithTimeout(ctx, s.dtout)
 	defer cancel()
 
 	user, err := s.refetchContextUserFromDB(ctx)
@@ -65,8 +65,8 @@ func (s *Service) ResetDeposit(ctx context.Context) ([]uint, error) {
 		return nil, domain.ErrPermissionDenied
 	}
 
-	s.depositLock.Lock()
-	defer s.depositLock.Unlock()
+	s.dl.Lock()
+	defer s.dl.Unlock()
 
 	deposit := user.Deposit
 	user.ResetDeposit()

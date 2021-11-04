@@ -12,11 +12,13 @@ import (
 )
 
 type Service struct {
-	ur             domain.UserRepository
-	jr             domain.JwtRepository
-	jwt            *JWTManager
-	depositTimeout time.Duration
-	depositLock    *sync.RWMutex
+	ur  domain.UserRepository
+	jr  domain.JwtRepository
+	jwt *JWTManager
+	// deposit timeout
+	dtout time.Duration
+	// deposit lock
+	dl sync.RWMutex
 }
 
 var UserService *Service
@@ -25,13 +27,12 @@ func InitService(
 	ur domain.UserRepository,
 	jr domain.JwtRepository,
 	jwt *JWTManager,
-	depositTimeout time.Duration,
+	dtout time.Duration,
 ) domain.UserService {
 	if UserService == nil {
 		UserService = &Service{
 			ur: ur, jr: jr, jwt: jwt,
-			depositTimeout: depositTimeout,
-			depositLock:    &sync.RWMutex{},
+			dtout: dtout,
 		}
 	}
 	return UserService
