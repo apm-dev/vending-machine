@@ -59,6 +59,7 @@ $ curl localhost:9090/products/
 # Stop
 $ make stop
 ```
+[`postman-collection`](https://github.com/apm-dev/vending-machine/blob/main/vending-machine.postman_collection.json)
 
 ### 🛠 Tools Used:
 In this project, I use some tools listed below. But you can use any similar library that have the same purposes. But, well, different library will have different implementation type. Just be creative and use anything that you really need. 
