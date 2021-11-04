@@ -24,7 +24,7 @@ This is an example of implementation of Clean Architecture in Go (Golang) projec
 📚 More at [Martin Fowler PresentationDomainDataLayering](https://martinfowler.com/bliki/PresentationDomainDataLayering.html)
 
 ### The Diagram: 
-![clean architecture](https://github.com/apm-dev/vending-machine/blob/feature/readme/clean-arch.png)
+![clean architecture](https://github.com/apm-dev/vending-machine/blob/main/clean-arch.png)
 
 
 ### How To Run This Project
