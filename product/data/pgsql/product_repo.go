@@ -32,7 +32,7 @@ func (r *ProductRepository) Commit() {
 	r.db.Commit()
 }
 
-func (r *ProductRepository) Rollback(ctx context.Context) {
+func (r *ProductRepository) Rollback() {
 	r.db.Rollback()
 }
 

@@ -7,7 +7,7 @@ import (
 
 type Product struct {
 	Name     string `gorm:"column:name"`
-	Count    uint   `gorm:"column:amount_available"`
+	Count    uint   `gorm:"column:count"`
 	Price    uint   `gorm:"column:cost"`
 	SellerID uint   `gorm:"column:seller_id"`
 	// gorm model contains id, created_at, updated_at, deleted_at by default

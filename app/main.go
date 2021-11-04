@@ -3,10 +3,14 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/apm-dev/vending-machine/pkg/httputil"
 	"github.com/apm-dev/vending-machine/pkg/logger"
+	"github.com/apm-dev/vending-machine/product"
+	productPgsql "github.com/apm-dev/vending-machine/product/data/pgsql"
+	productRest "github.com/apm-dev/vending-machine/product/presentation/rest"
 	"github.com/apm-dev/vending-machine/user"
 	userPgsql "github.com/apm-dev/vending-machine/user/data/pgsql"
 	userRest "github.com/apm-dev/vending-machine/user/presentation/rest"
@@ -56,7 +60,11 @@ func main() {
 	}()
 
 	// data (repository)
-	err = db.AutoMigrate(&userPgsql.User{}, &userPgsql.JWT{})
+	err = db.AutoMigrate(
+		&userPgsql.User{},
+		&userPgsql.JWT{},
+		&productPgsql.Product{},
+	)
 	fatalOnError(err)
 
 	ur := userPgsql.InitUserRepository(db)
@@ -65,11 +73,13 @@ func main() {
 		viper.GetString("jwt.secret"),
 		time.Duration(viper.GetInt("jwt.duration"))*time.Second,
 	)
+	pr := productPgsql.InitProductRepository(db)
 
 	depositTimeout := time.Duration(viper.GetInt("deposit.timeout")) * time.Second
 
 	// services (usecase)
 	us := user.InitService(ur, jr, jwt, depositTimeout)
+	ps := product.InitService(pr, ur)
 
 	// presentation (delivery/controller)
 	e := echo.New()
@@ -84,6 +94,11 @@ func main() {
 
 	// rest(http) handlers
 	userRest.InitUserHandler(e, ag, us)
+	productRest.InitProductHandler(e, ag, ps)
+
+	e.GET("/", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, e.Routes())
+	})
 
 	log.Fatal(e.Start(viper.GetString("server.address")))
 }
