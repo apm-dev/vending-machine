@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestDeposit(t *testing.T) {
+func Test_Service_Deposit(t *testing.T) {
 	type args struct {
 		ctx  context.Context
 		coin domain.Coin

@@ -16,7 +16,7 @@ type Service struct {
 	pl sync.RWMutex
 }
 
-func InitProductService(pr domain.ProductRepository, ur domain.UserRepository) domain.ProductService {
+func InitService(pr domain.ProductRepository, ur domain.UserRepository) domain.ProductService {
 	return &Service{pr: pr, ur: ur}
 }
 
@@ -143,7 +143,7 @@ func (s *Service) Buy(ctx context.Context, cart map[uint]uint) (*domain.Bill, er
 	u, err := domain.UserFromContext(ctx)
 	if err != nil {
 		logger.Log(logger.ERROR, errors.Wrap(err, op).Error())
-		return nil, domain.ErrUserNotFound
+		return nil, domain.ErrInternalServer
 	}
 
 	if u.Role != domain.BUYER {
