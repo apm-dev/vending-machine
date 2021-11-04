@@ -3,15 +3,14 @@ package main
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"time"
 
+	"github.com/apm-dev/vending-machine/pkg/httputil"
 	"github.com/apm-dev/vending-machine/pkg/logger"
 	"github.com/apm-dev/vending-machine/user"
 	userPgsql "github.com/apm-dev/vending-machine/user/data/pgsql"
 	userRest "github.com/apm-dev/vending-machine/user/presentation/rest"
 	"github.com/apm-dev/vending-machine/user/presentation/rest/middlewares"
-	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/spf13/viper"
@@ -78,7 +77,7 @@ func main() {
 	e.Use(middleware.BodyLimit("1M"))
 	e.Use(middleware.CORS())
 	// echo validator
-	e.Validator = &CustomValidator{validator: validator.New()}
+	e.Validator = httputil.InitCustomValidator()
 	// echo middlewares
 	authMiddleware := middlewares.InitUserMiddleware(us)
 	ag := e.Group("", authMiddleware.JwtAuth)
@@ -87,18 +86,6 @@ func main() {
 	userRest.InitUserHandler(e, ag, us)
 
 	log.Fatal(e.Start(viper.GetString("server.address")))
-}
-
-type CustomValidator struct {
-	validator *validator.Validate
-}
-
-func (cv *CustomValidator) Validate(i interface{}) error {
-	if err := cv.validator.Struct(i); err != nil {
-		// Optionally, you could return the error to give each route more control over the status code
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-	}
-	return nil
 }
 
 func fatalOnError(err error) {
