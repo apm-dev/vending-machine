@@ -119,6 +119,8 @@ type UserService interface {
 }
 
 type UserRepository interface {
+	DBTransaction
+	BeginTransaction(ctx context.Context) (context.Context, UserRepository)
 	Insert(ctx context.Context, u User) (uint, error)
 	FindById(ctx context.Context, id uint) (*User, error)
 	FindByUsername(ctx context.Context, un string) (*User, error)

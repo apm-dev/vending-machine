@@ -1,4 +1,4 @@
-package pgtesthelper
+package pgsqlhelper
 
 import (
 	"log"

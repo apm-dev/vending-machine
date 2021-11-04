@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/apm-dev/vending-machine/domain"
+	"github.com/apm-dev/vending-machine/pkg/pgsqlhelper"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
@@ -15,6 +16,23 @@ type UserRepository struct {
 
 func InitUserRepository(db *gorm.DB) domain.UserRepository {
 	return &UserRepository{db}
+}
+
+func (r *UserRepository) BeginTransaction(ctx context.Context) (context.Context, domain.UserRepository) {
+	if tx, ok := pgsqlhelper.TransactionFromContext(ctx); ok {
+		return ctx, InitUserRepository(tx)
+	}
+	tx := r.db.Begin()
+	ctx = pgsqlhelper.TransactionToContext(ctx, tx)
+	return ctx, InitUserRepository(tx)
+}
+
+func (r *UserRepository) Commit() {
+	r.db.Commit()
+}
+
+func (r *UserRepository) Rollback() {
+	r.db.Rollback()
 }
 
 func (r *UserRepository) Insert(ctx context.Context, u domain.User) (uint, error) {
