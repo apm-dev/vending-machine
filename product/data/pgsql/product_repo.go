@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/apm-dev/vending-machine/domain"
+	"github.com/apm-dev/vending-machine/pkg/pgsqlhelper"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
@@ -16,6 +17,23 @@ func InitProductRepository(db *gorm.DB) domain.ProductRepository {
 	return &ProductRepository{
 		db: db,
 	}
+}
+
+func (r *ProductRepository) BeginTransaction(ctx context.Context) (context.Context, domain.ProductRepository) {
+	if tx, ok := pgsqlhelper.TransactionFromContext(ctx); ok {
+		return ctx, InitProductRepository(tx)
+	}
+	tx := r.db.Begin()
+	ctx = pgsqlhelper.TransactionToContext(ctx, tx)
+	return ctx, InitProductRepository(tx)
+}
+
+func (r *ProductRepository) Commit() {
+	r.db.Commit()
+}
+
+func (r *ProductRepository) Rollback(ctx context.Context) {
+	r.db.Rollback()
 }
 
 func (r *ProductRepository) Insert(ctx context.Context, p domain.Product) (uint, error) {

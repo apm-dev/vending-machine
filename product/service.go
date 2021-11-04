@@ -183,25 +183,34 @@ func (s *Service) Buy(ctx context.Context, cart map[uint]uint) (*domain.Bill, er
 		}
 	}
 
+	// passing same tx object in the context
+	// when we rollback(commit) one repo,
+	// another will rollback(commit) too
+	ctx, pr := s.pr.BeginTransaction(ctx)
+	ctx, ur := s.ur.BeginTransaction(ctx)
+
 	for _, p := range products {
-		//TODO: use database transaction
-		err = s.pr.Update(ctx, &p)
+		err = pr.Update(ctx, &p)
 		if err != nil {
+			pr.Rollback()
 			logger.Log(logger.ERROR, errors.Wrap(err, op).Error())
 			return nil, domain.ErrInternalServer
 		}
 	}
 
-	//TODO: use database transaction
 	u.Deposit -= totalPrice
-	err = s.ur.Update(ctx, u)
+	err = ur.Update(ctx, u)
 	if err != nil {
+		ur.Rollback()
 		logger.Log(logger.ERROR, errors.Wrap(err, op).Error())
 		return nil, domain.ErrInternalServer
 	}
 	// calculating remaining user deposit by valid coins
 	refund := algo.MinimumNumberOfElementsWhoseSumIs(domain.Coins, u.Deposit)
 
+	// there is no difference to call pr.Commit()
+	// they are in the same transaction
+	ur.Commit()
 	return &domain.Bill{
 		TotalSpent: totalPrice,
 		Items:      items,

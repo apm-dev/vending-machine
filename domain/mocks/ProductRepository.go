@@ -14,6 +14,36 @@ type ProductRepository struct {
 	mock.Mock
 }
 
+// BeginTransaction provides a mock function with given fields: ctx
+func (_m *ProductRepository) BeginTransaction(ctx context.Context) (context.Context, domain.ProductRepository) {
+	ret := _m.Called(ctx)
+
+	var r0 context.Context
+	if rf, ok := ret.Get(0).(func(context.Context) context.Context); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(context.Context)
+		}
+	}
+
+	var r1 domain.ProductRepository
+	if rf, ok := ret.Get(1).(func(context.Context) domain.ProductRepository); ok {
+		r1 = rf(ctx)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(domain.ProductRepository)
+		}
+	}
+
+	return r0, r1
+}
+
+// Commit provides a mock function with given fields:
+func (_m *ProductRepository) Commit() {
+	_m.Called()
+}
+
 // Delete provides a mock function with given fields: ctx, id
 func (_m *ProductRepository) Delete(ctx context.Context, id uint) error {
 	ret := _m.Called(ctx, id)
@@ -93,6 +123,11 @@ func (_m *ProductRepository) List(ctx context.Context) ([]domain.Product, error)
 	}
 
 	return r0, r1
+}
+
+// Rollback provides a mock function with given fields:
+func (_m *ProductRepository) Rollback() {
+	_m.Called()
 }
 
 // Update provides a mock function with given fields: ctx, p

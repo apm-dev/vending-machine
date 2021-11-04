@@ -40,6 +40,8 @@ type ProductService interface {
 }
 
 type ProductRepository interface {
+	DBTransaction
+	BeginTransaction(ctx context.Context) (context.Context, ProductRepository)
 	Insert(ctx context.Context, p Product) (uint, error)
 	FindById(ctx context.Context, id uint) (*Product, error)
 	List(ctx context.Context) ([]Product, error)

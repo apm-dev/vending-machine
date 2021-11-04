@@ -2,6 +2,7 @@ package product_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/apm-dev/vending-machine/domain"
@@ -35,32 +36,41 @@ func Test_Service_Buy(t *testing.T) {
 	normalBuyer := &domain.User{
 		Id:      1,
 		Role:    domain.BUYER,
-		Deposit: 50,
+		Deposit: 500,
 	}
 	normalContext := context.WithValue(context.Background(), domain.USER, normalBuyer)
 
-	cake := &domain.Product{Id: 1, Name: "Cake", Price: 5, Count: 5}
-	soda := &domain.Product{Id: 2, Name: "Soda", Price: 10, Count: 5}
+	cake := &domain.Product{Id: 1, Name: "Cake", Price: 5, Count: 500}
+	soda := &domain.Product{Id: 2, Name: "Soda", Price: 10, Count: 500}
 
 	testCases := []testCase{
 		{
 			name: "should succeed when a buyer with sufficient balance request valid products",
 			prepare: func() {
-				pr.On("FindById", mock.AnythingOfType(valueCtx), uint(1)).
+				pr.On("FindById", mock.Anything, mock.Anything).
 					Return(cake, nil).Once()
 
-				pr.On("FindById", mock.AnythingOfType(valueCtx), uint(2)).
+				pr.On("FindById", mock.Anything, mock.Anything).
 					Return(soda, nil).Once()
 
-				pr.On("Update", mock.AnythingOfType(valueCtx), mock.Anything).
-					Return(nil).Twice()
+				pr.On("BeginTransaction", mock.Anything).
+					Return(normalContext, pr).Once()
+				ur.On("BeginTransaction", mock.Anything).
+					Return(normalContext, ur).Once()
 
-				ur.On("Update", mock.AnythingOfType(valueCtx), mock.Anything).
+				pr.On("Update", mock.Anything, mock.Anything).
+					Return(nil).Twice()
+				ur.On("Update", mock.Anything, mock.Anything).
 					Return(nil).Once()
+
+				ur.On("Commit").Once()
 			},
 			args: args{
-				ctx:  normalContext,
-				cart: normalCart,
+				ctx: context.WithValue(context.Background(), domain.USER, &domain.User{
+					Role:    domain.BUYER,
+					Deposit: 55,
+				}),
+				cart: map[uint]uint{1: 2, 2: 1},
 			},
 			wants: wants{
 				err: nil,
@@ -70,7 +80,7 @@ func Test_Service_Buy(t *testing.T) {
 						{Name: "Cake", Count: 2, Price: 10},
 						{Name: "Soda", Count: 1, Price: 10},
 					},
-					Refund: []uint{20, 10},
+					Refund: []uint{20, 10, 5},
 				},
 			},
 		},
@@ -148,6 +158,58 @@ func Test_Service_Buy(t *testing.T) {
 				bill: nil,
 			},
 		},
+		{
+			name: "should fail and rollback changes when products update fail",
+			prepare: func() {
+				pr.On("FindById", mock.AnythingOfType("*context.valueCtx"), mock.Anything).
+					Return(cake, nil).Once()
+
+				pr.On("BeginTransaction", mock.Anything).
+					Return(normalContext, pr).Once()
+				ur.On("BeginTransaction", mock.Anything).
+					Return(normalContext, ur).Once()
+
+				pr.On("Update", mock.AnythingOfType("*context.valueCtx"), mock.Anything).
+					Return(errors.New("failed to update product")).Once()
+
+				pr.On("Rollback").Once()
+			},
+			args: args{
+				ctx:  normalContext,
+				cart: map[uint]uint{1: 2},
+			},
+			wants: wants{
+				err:  domain.ErrInternalServer,
+				bill: nil,
+			},
+		},
+		{
+			name: "should fail and rollback changes when user update fail",
+			prepare: func() {
+				pr.On("FindById", mock.Anything, mock.Anything).
+					Return(cake, nil).Once()
+
+				pr.On("BeginTransaction", mock.Anything).
+					Return(normalContext, pr).Once()
+				ur.On("BeginTransaction", mock.Anything).
+					Return(normalContext, ur).Once()
+
+				pr.On("Update", mock.Anything, mock.Anything).
+					Return(nil).Once()
+				ur.On("Update", mock.Anything, mock.Anything).
+					Return(errors.New("failed to update user")).Once()
+
+				ur.On("Rollback").Once()
+			},
+			args: args{
+				ctx:  normalContext,
+				cart: map[uint]uint{1: 2},
+			},
+			wants: wants{
+				err:  domain.ErrInternalServer,
+				bill: nil,
+			},
+		},
 	}
 
 	svc := product.InitService(pr, ur)
@@ -166,4 +228,6 @@ func Test_Service_Buy(t *testing.T) {
 			assert.EqualValues(t, tc.wants.bill, bill, tc.name)
 		}
 	}
+	pr.AssertExpectations(t)
+	ur.AssertExpectations(t)
 }

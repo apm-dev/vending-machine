@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/apm-dev/vending-machine/domain"
-	"github.com/apm-dev/vending-machine/pkg/pgtesthelper"
+	"github.com/apm-dev/vending-machine/pkg/pgsqlhelper"
 	"github.com/apm-dev/vending-machine/user/data/pgsql"
 	"github.com/stretchr/testify/suite"
 	"gorm.io/gorm"
@@ -15,12 +15,12 @@ import (
 type UserRepoTestSuite struct {
 	suite.Suite
 	db    *gorm.DB
-	purge pgtesthelper.PurgeResourcesFunc
+	purge pgsqlhelper.PurgeResourcesFunc
 }
 
 func (s *UserRepoTestSuite) SetupTest() {
 	var err error
-	s.db, s.purge, err = pgtesthelper.NewPostgreContainer(pgtesthelper.PgConfig{
+	s.db, s.purge, err = pgsqlhelper.NewPostgreContainer(pgsqlhelper.PgConfig{
 		Version:  "14",
 		Username: "admin",
 		Password: "root",
