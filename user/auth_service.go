@@ -93,7 +93,7 @@ func (s *Service) Login(ctx context.Context, uname, pass string) (string, bool, 
 }
 
 // Authorize parses jwt token and return related user
-func (s *Service) Authorize(ctx context.Context, token string) (uint, error) {
+func (s *Service) Authorize(ctx context.Context, token string) (*domain.User, error) {
 	const op string = "user.service.Authorize"
 
 	// verify and get claims of token
@@ -101,22 +101,26 @@ func (s *Service) Authorize(ctx context.Context, token string) (uint, error) {
 	if err != nil {
 		if errors.Is(err, domain.ErrInvalidToken) {
 			logger.Log(logger.INFO, errors.Wrap(err, op).Error())
-			return 0, domain.ErrInvalidToken
+			return nil, domain.ErrInvalidToken
 		}
 		logger.Log(logger.ERROR, errors.Wrap(err, op).Error())
-		return 0, domain.ErrInternalServer
+		return nil, domain.ErrInternalServer
 	}
 
 	// check token existans in db to see is it still active or not
 	exists, err := s.jr.Exists(ctx, token)
 	if err != nil {
-		return 0, domain.ErrInternalServer
+		return nil, domain.ErrInternalServer
 	}
 	if !exists {
-		return 0, domain.ErrInvalidToken
+		return nil, domain.ErrInvalidToken
 	}
 
-	return claims.Id, nil
+	user, err := s.ur.FindById(ctx, claims.Id)
+	if err != nil {
+		return nil, domain.ErrUserNotFound
+	}
+	return user, nil
 }
 
 // TerminateActiveSessions terminates all other active sessions

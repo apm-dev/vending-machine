@@ -104,7 +104,7 @@ type UserService interface {
 	// which says is there another active session using this account or not
 	Login(ctx context.Context, uname, pass string) (string, bool, error)
 	// Authorize parses jwt token and return related user
-	Authorize(ctx context.Context, token string) (uint, error)
+	Authorize(ctx context.Context, token string) (*User, error)
 	// TerminateActiveSessions terminates all other active sessions
 	TerminateActiveSessions(ctx context.Context) error
 	// Deposit increases buyer(user) deposit
