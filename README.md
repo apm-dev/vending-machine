@@ -2,7 +2,7 @@
 
 ✅ This is an API for a vending machine, allowing users with a “seller” role to add, update or remove products, while users with a “buyer” role can deposit coins into the machine and make purchases. This vending machine only accept 5, 10, 20, 50 and 100 🪙 cent coins.
 
-## Description
+## 📜 Description
 
 This is an example of implementation of Clean Architecture in Go (Golang) project.
 
@@ -23,20 +23,20 @@ This is an example of implementation of Clean Architecture in Go (Golang) projec
 
 📚 More at [Martin Fowler PresentationDomainDataLayering](https://martinfowler.com/bliki/PresentationDomainDataLayering.html)
 
-### The Diagram: 
+### 🗺 The Diagram: 
 ![clean architecture](https://github.com/apm-dev/vending-machine/blob/main/clean-arch.png)
 
 
-### How To Run This Project
+### 🏃🏽‍♂️ How To Run This Project
 ⚠️ Since the project already use Go Module, I recommend to put the source code in any folder except GOPATH.
 
-#### Run the Testing
+#### 🧪 Run the Testing
 
 ```bash
 $ make test
 ```
 
-#### Run the Applications
+#### 🐳 Run the Applications
 Here is the steps to run it with `docker-compose`
 
 ```bash
@@ -60,7 +60,7 @@ $ curl localhost:9090/products/
 $ make stop
 ```
 
-### Tools Used:
+### 🛠 Tools Used:
 In this project, I use some tools listed below. But you can use any similar library that have the same purposes. But, well, different library will have different implementation type. Just be creative and use anything that you really need. 
 
 - All libraries listed in [`go.mod`](https://github.com/apm-dev/vending-machine/blob/main/go.mod)
